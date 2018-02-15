@@ -65,18 +65,28 @@ class WindQueryHelper:
         return df
 
     @staticmethod
-    def reformat_wind_data(raw_data, date, output_data_format=OutputFormat.PITVOT_TABLE_DF, multi_factors=False):
+    def reformat_wind_data(raw_data, date, output_data_format=OutputFormat.PIVOT_TABLE_DF, multi_factors=False):
         if not multi_factors:
             ret = pd.DataFrame(data=raw_data.Data,
                                columns=raw_data.Codes,
                                index=[date.strftime('%Y-%m-%d')])
             if output_data_format == OutputFormat.MULTI_INDEX_DF:
                 ret = WindQueryHelper.convert_2_multi_index(ret)
-        else:
+        elif 'windcode' not in raw_data.Fields:
             ret = pd.DataFrame(data=np.array(raw_data.Data).T,
-                               index=pd.MultiIndex.from_arrays([raw_data.Times, raw_data.Codes*len(raw_data.Times)],
-                                                               names=['date', 'secID']),
-                               columns=raw_data.Fields)
+                               index=pd.MultiIndex.from_product([raw_data.Codes, [date.strftime('%Y-%m-%d')]],
+                                                                names=['secID', 'date']),
+                               columns=[raw_data.Fields])
+        else:
+            # ret = pd.DataFrame(data=np.array(raw_data.Data).T,
+            #                    index=pd.MultiIndex.from_arrays([raw_data.Times, raw_data.Codes*len(raw_data.Times)],
+            #                                                    names=['date', 'secID']),
+            #                    columns=raw_data.Fields)
+            ret = pd.DataFrame(data=np.array(raw_data.Data[2:]).T,
+                               index=pd.MultiIndex.from_arrays([raw_data.Data[raw_data.Fields.index('windcode')],
+                                                                raw_data.Times],
+                                                               names=['secID', 'date']),
+                               columns=[field for field in raw_data.Fields if field != 'time' and field != 'windcode'])
         return ret
 
     @staticmethod

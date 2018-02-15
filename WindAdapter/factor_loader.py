@@ -4,7 +4,7 @@ import re
 
 import pandas as pd
 from argcheck import expect_types
-
+import numpy as np
 from WindAdapter.data_provider import WindDataProvider
 from WindAdapter.enums import FreqType
 from WindAdapter.enums import Header
@@ -40,9 +40,11 @@ class FactorLoader:
     def _merge_query_params(self, params, date=None):
         ret = ''
         for key, value in params.iteritems():
-            if not pd.isnull(value):
+            if key == 'tenor' and pd.isnull(value):
+                ret += 'tradeDate=' + date + ';'
+            elif not pd.isnull(value):
                 if key == Header.TENOR:
-                    py_assert(date is not None, ValueError, 'date must given if tenor is not None')
+                    py_assert(date is not None, ValueError, 'date must be given if tenor is not None')
                     # unit = ''.join(re.findall('[0-9]+', params[Header.TENOR]))
                     # freq = FreqType(params[Header.TENOR][len(unit):])
                     ret += 'startDate=' + WIND_DATA_PROVIDER.forward_date(date, value,
@@ -69,7 +71,7 @@ class FactorLoader:
         elif isinstance(self.sec_id, list):
             sec_id = self.sec_id
         else:
-            raise TypeError('FactorLoader._get_sec_id: sec_id must be either list of string')
+            raise TypeError('FactorLoader._get_sec_id: sec_id must be either list or string')
 
         return sec_id
 
@@ -84,8 +86,10 @@ class FactorLoader:
                 raw_data = WIND_DATA_PROVIDER.query_data(api=api,
                                                          sec_id=code_set,
                                                          indicator=main_params[Header.INDICATOR])
-                output_data = pd.concat([output_data, pd.DataFrame(raw_data.Data).T], axis=0)
-            output_data.columns = ['open', 'high', 'low', 'last', 'vol', 'amt', 'vol_ratio', 'pct_chg_5min']
+                length = len(raw_data.Data[0])
+                output_data = pd.concat(
+                    [output_data, pd.DataFrame(np.concatenate(([raw_data.Times * length], raw_data.Data))).T], axis=0)
+            output_data.columns = ['date'] + [field[3:] for field in main_params[Header.INDICATOR].split(',')]
         elif api == 'w.wsi':
             merged_extra_params = self._merge_query_params(extra_params, date=self.end_date)
             raw_data = WIND_DATA_PROVIDER.query_data(api=api,
@@ -95,7 +99,8 @@ class FactorLoader:
                                                      start_date=self.start_date,
                                                      end_date=self.end_date)
             multi_factors = True if extra_params[Header.MULTIFACTORS] == 'Y' else False
-            output_data = WIND_QUERY_HELPER.reformat_wind_data(raw_data=raw_data, date=self.end_date,
+            output_data = WIND_QUERY_HELPER.reformat_wind_data(raw_data=raw_data,
+                                                               date=self.end_date,
                                                                multi_factors=multi_factors)
         else:
             dates = WIND_DATA_PROVIDER.biz_days_list(start_date=self.start_date,
@@ -119,8 +124,8 @@ class FactorLoader:
                                                              start_date=date,
                                                              end_date=date)
                 elif api == 'w.wss':
-                    py_assert(not pd.isnull(extra_params[Header.TENOR]), ValueError,
-                              'tenor must be given for query factor {0}'.format(self.factor_name))
+                    # py_assert(not pd.isnull(extra_params[Header.TENOR]), ValueError,
+                    #           'tenor must be given for query factor {0}'.format(self.factor_name))
                     merged_extra_params = self._merge_query_params(extra_params, date=date)
                     raw_data = WIND_DATA_PROVIDER.query_data(api=api,
                                                              sec_id=sec_id,
@@ -164,15 +169,17 @@ class FactorLoader:
             date = date_convert_2_str(date)
             index_info = WIND_DATA_PROVIDER.get_universe(self.sec_id, date=date, output_weight=True)
             class_info = WIND_DATA_PROVIDER.query_data(api='w.wsd',
-                                                       sec_id=index_info[1],
+                                                       # sec_id=index_info[1],
+                                                       sec_id=index_info.index.tolist(),
                                                        indicator='indexcode_sw',
                                                        extra_params=extra_params,
                                                        start_date=date,
                                                        end_date=date)
-            industry_weight = pd.DataFrame(data={'sec_id': index_info[1],
+
+            industry_weight = pd.DataFrame(data={'sec_id': index_info.index,
                                                  'class_id': class_info.Data[0],
-                                                 'sec_weight': index_info[3]},
-                                           index=index_info[0])
+                                                 'sec_weight': index_info['weight']},
+                                           index=index_info.index)
 
             tmp = industry_weight.groupby('class_id').sum().T
             tmp.index = [date]
@@ -180,5 +187,3 @@ class FactorLoader:
                 if self.output_data_format == OutputFormat.MULTI_INDEX_DF else tmp
             ret = ret.append(tmp)
         return ret
-
-

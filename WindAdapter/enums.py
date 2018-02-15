@@ -16,14 +16,13 @@ class FreqType(StrEnum):
     EOD = 'D'
     EOW = 'W'
     EOM = 'M'
-    EOQ = 'Q'
     EOSY = 'S'
     EOY = 'Y'
 
 
 class OutputFormat(IntEnum):
     MULTI_INDEX_DF = 0
-    PITVOT_TABLE_DF = 1
+    PIVOT_TABLE_DF = 1
 
 
 class Header(StrEnum):

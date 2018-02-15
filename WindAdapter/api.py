@@ -43,7 +43,7 @@ def reset_data_dict_path(path, path_type_abs):
 @handle_wind_query_exception(LOGGER)
 def get_universe(index_id, date=None, output_weight=False):
     """
-    :param index_id: str, 可以为指数代码或者'fullA'（指全市场股票），不区分大小写
+    :param index_id: str, 可以为指数代码或者'fullA' or 'ashare'（指全市场股票），不区分大小写
     :param date: str, optional, YYYYMMDD/YYYY-MM-DD，默认为None，即返回最近交易日的成分股列表
     :param output_weight: bool, optional, 是否返回对应的个股权重
     :return: 如果output_weight=False, 返回list, 成分股列表
@@ -58,6 +58,11 @@ def get_universe(index_id, date=None, output_weight=False):
 
 @handle_wind_query_exception(LOGGER)
 def get_live(sec_id, block_size=400):
+    """
+    :param sec_id: list, wind股票代码，如果是全市场，可输入'fulla'或者'ashare'
+    :param block_size: 内部调用wsq接口一次提取的数量，默认400支
+    :return: pd.DataFrame, index=sec id, header = [rt_open,rt_high,rt_low,rt_last,rt_vol,rt_amt,rt_vol_ratio,rt_pct_chg_5min]
+    """
     factor = FactorLoader(start_date=None,
                           end_date=None,
                           factor_name='LIVE',
@@ -77,12 +82,12 @@ def factor_load(start_date, end_date, factor_name, save_file=None, **kwargs):
     :param save_file: str, optional, 保存数据的文件名，可写成 '*.csv' 或者 '*.pkl'
     :param kwargs: dict, optional
 
-            freq: str, optional, 因子数据的频率， 可选'M', 'W', 'Q', 'S', 'Y'， 参见enums.py - FreqType
-            tenor: str, optional, 因子数据的周期， 对于截面数据（如换手率，收益率），需要给定数据区间(向前)， 可选数字+FreqType， 如'1Q'
+            freq: str, optional, 因子数据的频率， 可选'M', 'W', 'S', 'Y'， 参见enums.py - FreqType
+            tenor: str, optional, 因子数据的周期， 对于截面数据（如换手率，收益率），需要给定数据区间(向前)， 可选数字+FreqType， 如'3M'
             sec_id, str/list, optional, 股票代码或者是指数代码
             output_data_format: enum, optional, 参见enums.py - FreqType
                                 MULTI_INDEX_DF: multi-index DataFrame, index=[date, secID], value = factor
-                                PITVOT_TABLE_DF: DataFrame, index=date, columns = secID
+                                PIVOT_TABLE_DF: DataFrame, index=date, columns = secID
             is_index: bool, optional, True: 输入的sec_id是指数，实际需要读取的是该指数成分股的因子数据，
                                       False: 直接读取sec_id的因子数据
             date_format: str, optional, 日期的格式， 默认'%Y-%m-%d'
@@ -130,5 +135,6 @@ def factor_details_help():
     data_dict = WIND_QUERY_HELPER.data_dict
     print_table(data_dict, name='Data_Dict')
     return
+
 
 

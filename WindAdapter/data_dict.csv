@@ -1,7 +1,7 @@
 name,api,indicator,priceadj,unit,reportadj,multifactors,explanation,type
 MV,wsd,mkt_cap_ard,F,100000000,,,总市值（个股当日股价*当日总股本）,规模
 PB,wsd,pb_lf,F,,,,市净率PB（LF）,价值
-STDQ,wss,free_turn_per,,,,,换手率（基准 自由流通股本）,流动性
+STDQ,wss,free_turn,,,,,换手率（基准 自由流通股本）,流动性
 EquityGrowth_YoY,wsd,yoy_equity,,,,,净资产（同比增长率）,成长
 ROE,wsd,roe_avg,,,,,净资产收益率（平均）,盈利
 ProfitGrowth_Qr_YoY,wsd,qfa_yoyprofit,,,,,单季度 净利润同比增长率,盈利
@@ -11,7 +11,7 @@ GrossProfit,wsd,grossmargin,,100000000,,,毛利,盈利
 EP,wsd,deductedprofit_ttm,,100000000,,,扣除非经常性损益后的净利润（TTM）,盈利
 SP,wsd,gr_ttm,,100000000,,,营业总收入（TTM）,盈利
 OHLCV_DAY,wsd,"open,high,low,close,volume",F,,,Y,开盘价、最高价、最低价、收盘价、成交量(日频数据),技术
-OHLCV_MIN,wsi,"open,high,low,close,volume",F,,,Y,开盘价、最高价、最低价、收盘价、成交量(分钟频数据),技术
+OHLCV_MIN,wsi,"open,high,low,close,volume,amt,pct_chg",F,,,Y,开盘价、最高价、最低价、收盘价、成交量(分钟频数据),技术
 OPEN,wsd,open,F,,,,开盘价,技术
 HIGH,wsd,high,F,,,,最高价,技术
 LOW,wsd,low,F,,,,最低价,技术
@@ -26,4 +26,7 @@ SW_NAME_C1,wsd,industry_sw,,,,,股票所属申万一级行业名称,基本信息
 SW_NAME_C2,wsd,industry_sw,,,,,股票所属申万二级行业名称,基本信息
 INDUSTRY_WEIGHT_C1,wset,,,,,,申万一级行业所占指数权重,基本信息
 INDUSTRY_WEIGHT_C2,wset,,,,,,申万二级行业所占指数权重,基本信息
-LIVE,wsq,"rt_open,rt_high,rt_low,rt_last,rt_vol,rt_amt,rt_vol_ratio,rt_pct_chg_5min",,,,,实时行情信息,技术
+LIVE,wsq,"rt_open,rt_high,rt_low,rt_last,rt_vol,rt_amt,rt_vol_ratio,rt_pct_chg_5min",,,,Y,实时行情信息,技术
+FULL_OHLC_DAY,wss,"open,high,low,close,pct_chg,volume,amt,adjfactor,vwap,trade_status",F,,,Y,,
+INDEX_FULL_OHLC_DAY,wss,"open,high,low,close,pct_chg,volume,amt",,,,Y,,
+INDEX_FUTURE_FULL_OHLC_DAY,wss,"pre_settle,open,high,low,close,settle,volume,amt,oi,chg",,,,Y,,
